@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuctLab: AI-assisted detection and classification of magnetospheric ducts</title>
+<meta name="description" content="DuctLab uses MMS magnetic field, plasma and wave data to find magnetospheric ducts and study whistler-mode wave propagation.">
+<meta name="author" content="Salman A. Nejad">
+<meta name="theme-color" content="#0B1446">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DuctLab: AI-assisted detection of magnetospheric ducts">
+<meta property="og:description" content="A research application for finding magnetic and density ducts in MMS data using supervised machine learning.">
+<meta property="og:image" content="https://sanejad.github.io/DuctLab-Overview/assets/img/social-preview.png">
+<meta property="og:url" content="https://sanejad.github.io/DuctLab-Overview/">
+<meta name="twitter:card" content="summary_large_image">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/crimson-text-600.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="assets/fonts/fira-sans-400.woff" as="font" type="font/woff" crossorigin>
+<style>
+@font-face{font-family:"Crimson Text";src:url(assets/fonts/crimson-text-600.woff) format("woff");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Crimson Text";src:url(assets/fonts/crimson-text-400i.woff) format("woff");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Fira Sans";src:url(assets/fonts/fira-sans-400.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Fira Sans";src:url(assets/fonts/fira-sans-400i.woff) format("woff");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Fira Sans";src:url(assets/fonts/fira-sans-500.woff) format("woff");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Fira Sans";src:url(assets/fonts/fira-sans-600.woff) format("woff");font-weight:600;font-style:normal;font-display:swap}
+
+
+  
+:root{
+  --navy:#0B1446; --navy-deep:#09103A; --navy-2:#121D5A; --navy-line:#2A3780;
+  --on-navy:#EEF2FF; --on-navy-2:#B9C3E6; --on-navy-3:#8C97C8;
+  --amber:#FDB43A;
+  --ink:#1B2559; --ink-2:#465276; --ink-3:#5F6A8E;
+  --paper:#F5F7FB; --plate:#FFFFFF; --rule:#DCE2EE; --tint:#EAF0FA;
+  --link:#2156D9;
+  --serif:"Crimson Text","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sans:"Fira Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --measure:66ch; --wide:1200px;
+  --pad:clamp(20px,5vw,56px);
+}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#E6EAF8; --ink-2:#B6C0E0; --ink-3:#9AA5CC; --paper:#0E1438; --plate:#F7F9FE; --rule:#28316B; --tint:#141C4A; --link:#9DBBFF}
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1.125rem/1.65 var(--sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img,svg{display:block;max-width:100%}
+img{height:auto}
+a{color:var(--link);text-underline-offset:.18em;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:4px}
+.wrap{max-width:var(--wide);margin:0 auto;padding:0 var(--pad)}
+.prose{max-width:var(--measure)}
+h1,h2{font-family:var(--serif);font-weight:600;letter-spacing:-.012em;margin:0}
+h2{font-size:clamp(2.1rem,3.8vw,3.2rem);line-height:1.05;margin-bottom:.5em}
+h3{font:600 1.3rem/1.3 var(--sans);margin:2.2em 0 .6em;letter-spacing:-.005em}
+p{margin:0 0 1em}
+.lead{font-size:1.24rem;line-height:1.6;color:var(--ink-2)}
+.skip{position:absolute;left:-999px;top:0;background:var(--amber);color:var(--navy);padding:.6em 1em;z-index:10;font-weight:600}
+.skip:focus{left:12px;top:12px}
+
+/* ------------------------------------------------ hero */
+.hero{background:var(--navy);color:var(--on-navy);position:relative;overflow:hidden}
+.top{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:22px;padding-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--on-navy);text-decoration:none;font:600 1.1rem/1 var(--sans);letter-spacing:.01em}
+.brand img{width:34px;height:34px;border-radius:8px}
+.top ul{list-style:none;display:flex;gap:clamp(14px,2.4vw,30px);margin:0;padding:0}
+.top a{color:var(--on-navy-2);text-decoration:none;font-size:1rem}
+.top a:hover{color:var(--on-navy)}
+.hero-text{padding-top:clamp(20px,4vw,52px);padding-bottom:clamp(20px,2.4vw,30px);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,5vw,72px);align-items:end}
+.hero h1{font-size:clamp(4rem,10vw,8.4rem);line-height:.86;letter-spacing:-.025em;color:#fff}
+.hero .lede{font-size:clamp(1.12rem,1.6vw,1.3rem);line-height:1.58;color:var(--on-navy-2);margin:0 0 1.2em;max-width:40ch}
+.hero .lede strong{color:var(--on-navy);font-weight:500}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin:0}
+.btn{display:inline-flex;align-items:center;padding:.72em 1.25em;border-radius:999px;font:500 1rem/1 var(--sans);text-decoration:none;transition:background-color .15s,border-color .15s}
+.btn-amber{background:var(--amber);color:var(--navy)}
+.btn-amber:hover{background:#FFE3A3}
+.btn-ghost{color:var(--on-navy);border:1px solid var(--navy-line)}
+.btn-ghost:hover{border-color:var(--on-navy-2)}
+.strip{margin:0;position:relative}
+.strip-svg{width:100%;height:clamp(300px,34vw,520px)}
+.strip figcaption{font-size:.9rem;line-height:1.5;color:var(--on-navy-3);padding-top:14px;padding-bottom:34px}
+.strip figcaption span{display:block;max-width:96ch}
+.s-wall{fill:none;stroke:#FFE6A6;stroke-width:2;opacity:.9}
+.chip-bg{fill:#0B1446;stroke:#FDB43A;stroke-width:1.5}
+.chip-key{fill:#FDB43A}
+.chip-k{font:600 21px var(--sans);fill:#0B1446}
+.chip-v{font:500 21px var(--sans);fill:#FFF3D1;font-variant-numeric:tabular-nums}
+.s-lab{font:500 20px var(--sans);fill:#fff;paint-order:stroke;stroke:#070D33;stroke-width:5px;stroke-linejoin:round}
+.s-lab-w{fill:#FFE3A3;font-style:italic;font-weight:400}
+.s-lane-t{font:400 15px var(--sans);fill:#C3CCEE}
+.s-p{font:500 13px var(--sans);font-variant-numeric:tabular-nums}
+.s-main rect{stroke:#fff;stroke-width:2}
+.s-leg{font:400 14px var(--sans);fill:#C3CCEE}
+@media (max-width:700px){.s-p,.s-legend,.s-lane-t{display:none}}
+/* Reveal the observations, candidate intervals and model probabilities. */
+.js .strip .s-field{clip-path:inset(0 100% 0 0)}
+.js .strip .s-cand,.js .strip .s-duct,.js .strip .s-labels,.js .strip .s-legend,.js .strip .s-lane-t{opacity:0}
+.js .strip.play .s-field{animation:wipe 1.9s cubic-bezier(.42,.08,.36,1) forwards}
+.js .strip.play .s-labels{animation:fade .6s ease-out 1.5s forwards}
+.js .strip.play .s-lane-t{animation:fade .5s ease-out 1.8s forwards}
+.js .strip.play .s-cand{animation:pop .45s cubic-bezier(.2,.8,.3,1.2) forwards;animation-delay:calc(1.9s + var(--i) * 70ms);transform-box:fill-box;transform-origin:50% 50%}
+.js .strip.play .s-legend{animation:fade .5s ease-out 2.7s forwards}
+.js .strip.play .s-duct{animation:fade .7s ease-out 2.9s forwards}
+@keyframes wipe{to{clip-path:inset(0 0 0 0)}}
+@keyframes fade{to{opacity:1}}
+@keyframes pop{0%{opacity:0;transform:scaleX(.2)}100%{opacity:1;transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){
+  .js .strip .s-field{clip-path:none}
+  .js .strip .s-cand,.js .strip .s-duct,.js .strip .s-labels,.js .strip .s-legend,.js .strip .s-lane-t{opacity:1}
+  .js .strip.play *{animation:none!important}
+}
+
+/* ------------------------------------------------ sections */
+section{padding:clamp(64px,8vw,112px) 0}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,64px);align-items:start}
+@media (min-width:1021px){.split>figure{position:sticky;top:32px}}
+.split h3:first-of-type{margin-top:1.6em}
+.plate{background:var(--plate);border-radius:10px;padding:clamp(10px,1.6vw,18px);box-shadow:0 0 0 1px var(--rule)}
+figure{margin:0}
+.fig-cap{font-size:.93rem;line-height:1.5;color:var(--ink-3);margin-top:12px}
+.fig-cap b{color:var(--ink-2);font-weight:600}
+.wide-fig{margin:clamp(24px,3vw,36px) 0 clamp(8px,1vw,12px)}
+
+/* ------------------------------------------------ AI section (navy, calm) */
+.band{background:var(--navy-deep);color:var(--on-navy)}
+.band h2,.band h3{color:#fff}
+.band p{color:var(--on-navy-2)}
+.band a{color:var(--amber)}
+.band .lead{color:var(--on-navy)}
+.band .fig-cap{color:var(--on-navy-3)}
+.band .fig-cap b{color:var(--on-navy-2)}
+.band .plate{box-shadow:none}
+.ai-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,64px);align-items:start}
+.ai-cols h3{margin-top:0}
+/* model diagram */
+.flow-svg{width:100%;height:auto;overflow:visible}
+.fl-band{fill:url(#bandGrad);opacity:.62;transition:opacity .2s}
+.fl-name{font:500 17px var(--sans);fill:#fff}
+.fl-ex{font:400 13px var(--sans);fill:var(--on-navy-3)}
+.fl-pct{font:600 17px var(--sans);fill:var(--amber);font-variant-numeric:tabular-nums}
+.fl-row{cursor:default;outline:none}
+.fl-row:hover .fl-band,.fl-row:focus-visible .fl-band{opacity:1}
+.fl-row:focus-visible .fl-name{text-decoration:underline}
+.flow-svg:hover .fl-row:not(:hover) .fl-band{opacity:.28}
+.fl-node{fill:#121D5A;stroke:#FDB43A;stroke-width:1.5}
+.fl-node-t{font:600 21px var(--serif);fill:#fff}
+.fl-node-s{font:italic 400 16px var(--serif);fill:var(--on-navy-2)}
+.fl-out-l{fill:none;stroke:#8792C4;stroke-width:1.5}
+.fl-out-d{fill:#FDB43A}
+.fl-out-t{font:600 17px var(--sans);fill:#fff}
+.fl-out-s{font:400 13.5px var(--sans);fill:var(--on-navy-3)}
+.fl-bars{display:none;list-style:none;margin:0;padding:0}
+.fl-bars li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;margin-bottom:14px}
+.fb-name{color:#fff;font-weight:500;font-size:1rem}
+.fb-val{color:var(--amber);font-weight:600;font-variant-numeric:tabular-nums}
+.fb-track{grid-column:1/-1;height:12px}
+.fb-bar{display:block;height:12px;min-width:4px;border-radius:0 6px 6px 0;background:linear-gradient(90deg,#FDB43A,#F26B2A)}
+.fb-out{color:var(--on-navy-2);font-size:.95rem;display:block!important;margin-top:18px}
+@media (max-width:700px){.flow-svg{display:none}.fl-bars{display:block}}
+details.table-view{margin-top:14px;font-size:.95rem}
+details.table-view summary{cursor:pointer;color:var(--on-navy-2);width:max-content}
+details.table-view summary:hover{color:#fff}
+.data-table{border-collapse:collapse;margin-top:12px;width:100%;font-size:.98rem}
+.data-table caption{text-align:left;color:var(--on-navy-3);padding-bottom:8px}
+.data-table th,.data-table td{text-align:left;vertical-align:top;padding:11px 16px 11px 0;border-bottom:1px solid rgba(140,151,200,.25);color:var(--on-navy-2);font-weight:400;line-height:1.5}
+.data-table thead th{color:var(--on-navy);font-weight:500;border-bottom-color:rgba(140,151,200,.5)}
+.data-table th[scope=row]{color:#fff;font-weight:500}
+.data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.models{margin-top:8px}
+.models th[scope=row]{white-space:nowrap}
+.models small{color:var(--on-navy-3);font-size:.88rem}
+
+/* ------------------------------------------------ review */
+.shots{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:clamp(24px,4vw,48px);align-items:start;margin-top:clamp(28px,4vw,44px)}
+.annot{position:relative}
+.annot img{width:100%;height:auto;border-radius:6px}
+.pin{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:#C2410C;color:#fff;font:600 .9rem/28px var(--sans);text-align:center;box-shadow:0 0 0 3px #fff;transition:transform .15s}
+.pin.on{transform:scale(1.2)}
+.callouts{counter-reset:c;list-style:none;margin:18px 0 0;padding:0;font-size:.98rem;line-height:1.5}
+.callouts li{counter-increment:c;display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;margin-bottom:10px;color:var(--ink-2)}
+.callouts li::before{content:counter(c);width:24px;height:24px;border-radius:50%;background:#C2410C;color:#fff;font:600 .8rem/24px var(--sans);text-align:center;margin-top:.1em}
+
+/* ------------------------------------------------ status */
+.status{background:var(--tint)}
+.status-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(28px,5vw,72px);align-items:start}
+.contact{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.contact a.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;background:var(--plate);color:var(--ink);text-decoration:none;box-shadow:0 0 0 1px var(--rule)}
+@media (prefers-color-scheme:dark){.contact a.row{background:#1A2257;color:var(--ink)}}
+.contact a.row:hover{box-shadow:0 0 0 2px var(--link)}
+.contact .row span{display:block;font-size:.92rem;color:var(--ink-3)}
+.contact .row b{font-weight:600}
+footer{background:var(--navy-deep);color:var(--on-navy-3);font-size:.9rem;padding:32px 0}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 32px}
+footer a{color:var(--on-navy-2)}
+
+/* ------------------------------------------------ responsive */
+@media (max-width:1020px){
+  .hero-text,.split,.ai-cols,.shots,.status-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .top ul{display:none}
+  body{font-size:1.06rem}
+  .models th[scope=row]{white-space:normal}
+  .data-table th,.data-table td{padding-right:10px}
+}
+@media print{.hero,.band{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="hero" id="top">
+  <nav class="top wrap" aria-label="Main">
+    <a class="brand" href="#top"><img src="assets/img/icon-128.png" alt="" width="34" height="34">DuctLab</a>
+    <ul>
+      <li><a href="#ducts">Ducts</a></li>
+      <li><a href="#ai">AI</a></li>
+      <li><a href="#review">Review</a></li>
+      <li><a href="#software">Software</a></li>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#status">Contact</a></li>
+    </ul>
+  </nav>
+  <div class="hero-text wrap">
+    <h1>DuctLab</h1>
+    <div>
+      <p class="lede"><strong>AI-assisted detection of magnetospheric ducts in NASA MMS data.</strong> DuctLab is developed to find magnetospheric magnetic and density ducts in MMS observations, to study these structures over the entire mission. The program uses machine-learning models and learns from the events we review.</p>
+      <p class="actions"><a class="btn btn-amber" href="#ai">How it works</a><a class="btn btn-ghost" href="#status">Contact</a></p>
+    </div>
+  </div>
+  <figure class="strip" id="strip">
+<svg class="strip-svg" viewBox="0 0 1600 520" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="strip-title strip-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="strip-title">A magnetic duct candidate identified by DuctLab</title>
+<desc id="strip-desc">MMS1 observations over 65 seconds. Whistler-mode wave activity is localized within a 15-second magnetic field depletion. Eleven detected candidates are shown below, colored according to the model probability. The highlighted candidate has a probability of 0.77.</desc>
+<defs><linearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1446"/><stop offset="1" stop-color="#0B1446" stop-opacity="0"/></linearGradient><linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070D33" stop-opacity="0"/><stop offset="1" stop-color="#070D33" stop-opacity=".92"/></linearGradient><linearGradient id="pLegend" x1="0" y1="0" x2="1" y2="0"><stop offset="0.0" stop-color="#4C206E"/><stop offset="0.1" stop-color="#621F6E"/><stop offset="0.2" stop-color="#781F6E"/><stop offset="0.3" stop-color="#942564"/><stop offset="0.4" stop-color="#AF2B58"/><stop offset="0.5" stop-color="#C9344C"/><stop offset="0.6" stop-color="#DB4D3D"/><stop offset="0.7" stop-color="#EE652E"/><stop offset="0.8" stop-color="#F78B31"/><stop offset="0.9" stop-color="#FDB63D"/><stop offset="1.0" stop-color="#FEE198"/></linearGradient><linearGradient id="bandFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE6A6" stop-opacity=".16"/><stop offset=".35" stop-color="#FFE6A6" stop-opacity=".06"/><stop offset="1" stop-color="#FFE6A6" stop-opacity=".10"/></linearGradient></defs>
+<image class="s-field" href="assets/img/hero-field.webp" x="0" y="0" width="1600" height="520" preserveAspectRatio="none"/>
+<rect x="0" y="0" width="1600" height="70" fill="url(#fadeTop)"/>
+<rect x="0" y="358" width="1600" height="162" fill="url(#fadeBottom)"/>
+<g class="s-duct"><rect x="615.4" y="72" width="369.2" height="448" fill="url(#bandFill)"/><path d="M615.4,520 V72 H984.6 V520" class="s-wall"/>
+<g class="s-chip" transform="translate(800.0 72)"><rect x="-112" y="-22" width="224" height="44" rx="22" class="chip-bg"/><rect x="-112" y="-22" width="92" height="44" rx="22" class="chip-key"/><rect x="-40" y="-22" width="20" height="44" class="chip-key"/><text x="-66" y="7" text-anchor="middle" class="chip-k">duct</text><text x="42" y="7" text-anchor="middle" class="chip-v">p = 0.77</text></g>
+</g>
+<g class="s-labels"><text x="168" y="124" class="s-lab">|B|</text><text x="700" y="150" class="s-lab s-lab-w">whistler-mode waves</text></g>
+<g class="s-cands"><text x="150" y="416" class="s-lane-t">Detected candidates, colored by model probability p(duct)</text>
+<g class="s-cand" style="--i:0"><rect x="5.6" y="428" width="122.6" height="20" rx="5" fill="#F6832F"/><text x="66.9" y="442.5" text-anchor="middle" fill="#0B1446" class="s-p">0.78</text></g>
+<g class="s-cand" style="--i:1"><rect x="317.9" y="428" width="105.7" height="20" rx="5" fill="#D64542"/><text x="370.8" y="442.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.57</text></g>
+<g class="s-cand" style="--i:2"><rect x="348.7" y="455" width="265.7" height="20" rx="5" fill="#862269"/><text x="481.5" y="469.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.25</text></g>
+<g class="s-cand" style="--i:3"><rect x="550.2" y="428" width="216.5" height="20" rx="5" fill="#7B1F6E"/><text x="658.5" y="442.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.21</text></g>
+<g class="s-cand s-main" style="--i:4"><rect x="616.4" y="482" width="367.2" height="20" rx="5" fill="#F57E2E"/><text x="800.0" y="496.5" text-anchor="middle" fill="#0B1446" class="s-p">0.77</text></g>
+<g class="s-cand" style="--i:5"><rect x="902.5" y="428" width="176.5" height="20" rx="5" fill="#F68730"/><text x="990.8" y="442.5" text-anchor="middle" fill="#0B1446" class="s-p">0.79</text></g>
+<g class="s-cand" style="--i:6"><rect x="1022.5" y="455" width="113.4" height="20" rx="5" fill="#B72D55"/><text x="1079.2" y="469.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.43</text></g>
+<g class="s-cand" style="--i:7"><rect x="1094.9" y="428" width="119.6" height="20" rx="5" fill="#B52C56"/><text x="1154.7" y="442.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.42</text></g>
+<g class="s-cand" style="--i:8"><rect x="1137.9" y="482" width="331.9" height="20" rx="5" fill="#F78B31"/><text x="1303.9" y="496.5" text-anchor="middle" fill="#0B1446" class="s-p">0.80</text></g>
+<g class="s-cand" style="--i:9"><rect x="1493.3" y="428" width="91.8" height="20" rx="5" fill="#DA4A3F"/><text x="1539.2" y="442.5" text-anchor="middle" fill="#FFFFFF" class="s-p">0.59</text></g>
+<g class="s-cand" style="--i:10"><rect x="1544.1" y="455" width="54.9" height="20" rx="5" fill="#F89433"/><text x="1571.5" y="469.5" text-anchor="middle" fill="#0B1446" class="s-p">0.82</text></g>
+</g>
+<g class="s-legend" transform="translate(1190 406)"><text x="-10" y="5" text-anchor="end" class="s-leg">p(duct)</text><rect x="0" y="-4" width="230" height="9" rx="4.5" fill="url(#pLegend)"/><text x="0" y="24" class="s-leg">0</text><text x="230" y="24" text-anchor="end" class="s-leg">1</text></g>
+</svg>
+    <figcaption class="wrap"><span>MMS1 data on 6 March 2016, 20:03:25&ndash;20:04:30 UTC. The white line is |B|, and the colors show electric-field wave power from about 90&nbsp;Hz to 1&nbsp;kHz (jet scale). The bars show the detected candidates and their model probabilities. The highlighted candidate is a 15-second magnetic field depletion with whistler-mode waves inside it (p = 0.77).</span></figcaption>
+  </figure>
+</header>
+
+<main id="main">
+  <section id="ducts">
+    <div class="wrap split">
+      <div class="prose">
+        <h2>What is a duct?</h2>
+        <p class="lead">A duct is a field-aligned region where the plasma density or magnetic field magnitude is higher or lower than the background. Under certain conditions, these structures can trap whistler-mode waves and guide them along the magnetic field. This can affect where the waves interact with energetic electrons.</p>
+        <p>Ducts are usually found by looking at the magnetic field, electron density and wave spectra together. Doing this manually for years of MMS data takes a lot of time. This is why DuctLab was developed.</p>
+        <h3>Event detection</h3>
+        <p>DuctLab searches for ducts in two ways. First, it looks for enhancements and depletions in |B| and electron density relative to a local background. Second, it finds bursts of whistler-band wave power and looks for a corresponding structure in the magnetic field or density. If both structures are present, the event is kept as a compound duct candidate.</p>
+        <p>The boundaries are placed where the profile flattens out near the base of the structure, not at the threshold crossings. For each event, the program measures the field and density perturbations, profile shape, wave power inside and outside the duct, the fraction of the wave burst inside the duct, and the wave frequency relative to the local electron cyclotron frequency.</p>
+        <p>The detector works with enhancements and depletions in survey and burst data from all four MMS spacecraft.</p>
+      </div>
+      <figure>
+        <div class="plate"><img src="assets/img/detection.webp" width="1600" height="1184" loading="lazy" alt="Three panels of an MMS duct candidate showing the magnetic field magnitude, its background and detection threshold, the electric-field spectrogram, and whistler-band wave power localized between the duct boundaries."></div>
+        <figcaption class="fig-cap"><b>Figure 1.</b> A duct candidate in MMS1 survey data. Top: |B|, local background and detection threshold; the navy lines mark the duct boundaries. Middle: electric-field spectrogram. Bottom: whistler-band power. Most of the wave activity is inside the boundaries.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ai" class="band" aria-labelledby="ai-title">
+    <div class="wrap">
+      <div class="prose">
+        <h2 id="ai-title">Machine learning</h2>
+        <p class="lead">The detector finds many candidates, and not all of them are ducts. DuctLab uses supervised machine learning to help separate the two. The model estimates the probability of each candidate being a duct, based on the events that have already been reviewed. As more events are labeled, a new model can be trained.</p>
+      </div>
+
+      <h3>Physical features</h3>
+      <div class="ai-cols">
+        <p>For each candidate, DuctLab calculates about 100 features from the MMS data. These include the amplitude of the magnetic field and density perturbations, duration, profile shape, background plasma conditions, wave localization and frequency. DuctLab currently uses a calibrated gradient-boosted tree model to estimate the duct probability and a separate model to predict the duct type.</p>
+        <p>As shown in Figure 2, wave localization and magnetic structure account for about 41% and 40% of the current model’s feature importance. These are also two of the main things reviewers look at in an event. The percentages describe the model, not the physical importance of each quantity, and may change with further training.</p>
+      </div>
+      <figure class="wide-fig">
+<svg class="flow-svg" viewBox="0 0 1070 420" role="img" aria-labelledby="flow-title flow-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="flow-title">Relative feature importance in the active model</title>
+<desc id="flow-desc">Six feature groups with band widths proportional to relative importance: wave localization 41 percent, magnetic structure 40, background levels 10, magnetic profile 5.4, wave frequency 1.5 and eight smaller groups 2. The machine-learning workflow estimates duct probability, predicts duct type through a separate classifier and prioritizes uncertain candidates for review.</desc>
+<defs><linearGradient id="bandGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FDB43A" stop-opacity=".85"/><stop offset="1" stop-color="#F26B2A" stop-opacity=".55"/></linearGradient><radialGradient id="nodeGlow" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#F26B2A" stop-opacity=".35"/><stop offset="1" stop-color="#F26B2A" stop-opacity="0"/></radialGradient></defs>
+<g class="fl-row" tabindex="0" data-i="0" aria-label="Wave localization: 41% relative feature importance. Examples: wave-power contrast, containment and fraction of the burst inside the boundaries."><path d="M372,25.7 C486.0,25.7 486.0,145.6 600,145.6 L600,198.3 C486.0,198.3 486.0,78.3 372,78.3 Z" class="fl-band"/><text x="0" y="49.0" class="fl-name">Wave localization</text><text x="0" y="68.0" class="fl-ex">wave-power contrast, containment, burst fraction</text><text x="360" y="58.0" text-anchor="end" class="fl-pct">41%</text></g>
+<g class="fl-row" tabindex="0" data-i="1" aria-label="Magnetic structure: 40% relative feature importance. Examples: amplitude, depth, asymmetry and boundary gradients."><path d="M372,90.4 C486.0,90.4 486.0,198.3 600,198.3 L600,249.5 C486.0,249.5 486.0,141.6 372,141.6 Z" class="fl-band"/><text x="0" y="113.0" class="fl-name">Magnetic structure</text><text x="0" y="132.0" class="fl-ex">amplitude, depth, asymmetry, boundary gradients</text><text x="360" y="122.0" text-anchor="end" class="fl-pct">40%</text></g>
+<g class="fl-row" tabindex="0" data-i="2" aria-label="Background levels: 10% relative feature importance. Examples: B₀, n₀ and the electron cyclotron frequency."><path d="M372,173.6 C486.0,173.6 486.0,249.5 600,249.5 L600,262.3 C486.0,262.3 486.0,186.4 372,186.4 Z" class="fl-band"/><text x="0" y="177.0" class="fl-name">Background levels</text><text x="0" y="196.0" class="fl-ex">B₀, n₀ and the electron cyclotron frequency</text><text x="360" y="186.0" text-anchor="end" class="fl-pct">10%</text></g>
+<g class="fl-row" tabindex="0" data-i="3" aria-label="Magnetic profile: 5.4% relative feature importance. Example: the shape of the magnetic field magnitude across the duct."><path d="M372,240.6 C486.0,240.6 486.0,262.3 600,262.3 L600,269.2 C486.0,269.2 486.0,247.4 372,247.4 Z" class="fl-band"/><text x="0" y="241.0" class="fl-name">Magnetic profile</text><text x="0" y="260.0" class="fl-ex">the shape of |B| across the duct</text><text x="360" y="250.0" text-anchor="end" class="fl-pct">5.4%</text></g>
+<g class="fl-row" tabindex="0" data-i="4" aria-label="Wave frequency: 1.5% relative feature importance. Examples: peak frequency, normalized frequency and bandwidth."><path d="M372,306.7 C486.0,306.7 486.0,269.2 600,269.2 L600,271.8 C486.0,271.8 486.0,309.3 372,309.3 Z" class="fl-band"/><text x="0" y="305.0" class="fl-name">Wave frequency</text><text x="0" y="324.0" class="fl-ex">peak frequency, f/fᴄₑ, bandwidth</text><text x="360" y="314.0" text-anchor="end" class="fl-pct">1.5%</text></g>
+<g class="fl-row" tabindex="0" data-i="5" aria-label="Eight other feature groups: 2.0% relative feature importance. Examples: type flags, density, duration and detector score."><path d="M372,370.7 C486.0,370.7 486.0,271.8 600,271.8 L600,274.4 C486.0,274.4 486.0,373.3 372,373.3 Z" class="fl-band"/><text x="0" y="369.0" class="fl-name">Eight other groups</text><text x="0" y="388.0" class="fl-ex">type flags, density, duration, detector score…</text><text x="360" y="378.0" text-anchor="end" class="fl-pct">2.0%</text></g>
+<rect x="600" y="126" width="176" height="168" rx="18" class="fl-node"/>
+<text x="688.0" y="196" text-anchor="middle" class="fl-node-t">Gradient-boosted</text><text x="688.0" y="222" text-anchor="middle" class="fl-node-t">trees</text><text x="688.0" y="250" text-anchor="middle" class="fl-node-s">calibrated</text>
+<path d="M776,180 C816,180 806,94 842,94" class="fl-out-l"/><circle cx="846" cy="94" r="4" class="fl-out-d"/><text x="860" y="91" class="fl-out-t">p(duct)</text><text x="860" y="111" class="fl-out-s">estimated duct probability</text>
+<path d="M776,210 C816,210 806,210 842,210" class="fl-out-l"/><circle cx="846" cy="210" r="4" class="fl-out-d"/><text x="860" y="207" class="fl-out-t">Duct type</text><text x="860" y="227" class="fl-out-s">separate classifier</text>
+<path d="M776,240 C816,240 806,326 842,326" class="fl-out-l"/><circle cx="846" cy="326" r="4" class="fl-out-d"/><text x="860" y="323" class="fl-out-t">Review priority</text><text x="860" y="343" class="fl-out-s">uncertain candidates first</text>
+</svg>
+<ol class="fl-bars" aria-label="Relative importance of each feature group in the active model"><li><span class="fb-name">Wave localization</span><span class="fb-val">41%</span><span class="fb-track"><span class="fb-bar" style="width:100.0%"></span></span></li><li><span class="fb-name">Magnetic structure</span><span class="fb-val">40%</span><span class="fb-track"><span class="fb-bar" style="width:97.4%"></span></span></li><li><span class="fb-name">Background levels</span><span class="fb-val">10%</span><span class="fb-track"><span class="fb-bar" style="width:24.2%"></span></span></li><li><span class="fb-name">Magnetic profile</span><span class="fb-val">5.4%</span><span class="fb-track"><span class="fb-bar" style="width:13.1%"></span></span></li><li><span class="fb-name">Wave frequency</span><span class="fb-val">1.5%</span><span class="fb-track"><span class="fb-bar" style="width:3.6%"></span></span></li><li><span class="fb-name">Eight other groups</span><span class="fb-val">2.0%</span><span class="fb-track"><span class="fb-bar" style="width:4.8%"></span></span></li><li class="fb-out">The calibrated gradient-boosted tree model estimates p(duct). A separate classifier predicts duct type, and uncertain candidates receive priority for review.</li></ol>
+        <figcaption class="fig-cap"><b>Figure 2.</b> Feature importance in the current gradient-boosted tree model, calculated from the decrease in ranking performance when each group of features is shuffled. Values are rounded.</figcaption>
+        <details class="table-view"><summary>Show as a table</summary><table class="data-table"><caption>Relative importance of each feature group in the active model</caption><thead><tr><th scope="col">Feature group</th><th scope="col">Examples</th><th scope="col" class="num">Share</th></tr></thead><tbody><tr><th scope="row">Wave localization</th><td>wave-power contrast, containment, burst fraction</td><td class="num">41.1%</td></tr><tr><th scope="row">Magnetic structure</th><td>amplitude, depth, asymmetry, boundary gradients</td><td class="num">40.1%</td></tr><tr><th scope="row">Background levels</th><td>B₀, n₀ and the electron cyclotron frequency</td><td class="num">10.0%</td></tr><tr><th scope="row">Magnetic profile</th><td>the shape of |B| across the duct</td><td class="num">5.4%</td></tr><tr><th scope="row">Wave frequency</th><td>peak frequency, f/fᴄₑ, bandwidth</td><td class="num">1.5%</td></tr><tr><th scope="row">Eight other groups</th><td>type flags, density, duration, detector score…</td><td class="num">2.0%</td></tr></tbody></table></details>
+      </figure>
+
+      <h3>Machine-learning models</h3>
+      <div class="prose">
+        <p>DuctLab includes five types of machine-learning models. They are trained and tested on the same labeled events and data splits, so their performance can be compared. Other models can be added as Python plug-ins.</p>
+      </div>
+      <table class="data-table models">
+        <thead><tr><th scope="col">Model</th><th scope="col">Input</th><th scope="col">Purpose</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Gradient-boosted trees <small>(default)</small></th><td>About 100 physical features</td><td>Default model; works with limited labels and missing values</td></tr>
+          <tr><th scope="row">Random forest</th><td>The same physical features</td><td>Used for comparison with boosted trees</td></tr>
+          <tr><th scope="row">Profile neural network</th><td>Profiles of &delta;B/B&#8320;, &delta;n/n&#8320; and whistler-band power, together with physical features</td><td>Learns from the shapes of the profiles</td></tr>
+          <tr><th scope="row">1-D convolutional network <small>(PyTorch)</small></th><td>The same time-dependent profiles</td><td>For larger sets of labeled events</td></tr>
+          <tr><th scope="row">Ensemble</th><td>Tree-based and neural-network predictions</td><td>Combines predictions from both models</td></tr>
+          <tr><th scope="row">Plug-ins</th><td>User-defined inputs</td><td>New models can be added as Python files</td></tr>
+        </tbody>
+      </table>
+      <p class="prose" style="margin-top:16px">A separate classifier trained on confirmed ducts predicts whether a candidate is magnetic, density or compound.</p>
+
+      <h3>Training the models</h3>
+      <div class="ai-cols">
+        <div>
+          <p>Once the detector finds an event, the program calculates its features and the model assigns a probability. Events with the most uncertain predictions are reviewed first. When enough new labels are available, DuctLab trains and tests a new model. It replaces the current one only if it performs better on data neither model has seen.</p>
+          <p>Reviewers can also change the duct type, move the boundaries or add events the detector has missed. If the boundaries change, DuctLab calculates the features again before training.</p>
+          <p>Existing catalogs can also be imported to train the first model. Matching detections are labeled as ducts. Candidates far from the cataloged events can be used as provisional negative examples, although an incomplete catalog may have missed some ducts.</p>
+        </div>
+        <figure>
+          <div class="plate"><img src="assets/img/pipeline.webp" width="1600" height="996" loading="lazy" alt="DuctLab workflow showing MMS data acquisition, processing, candidate detection, classification, manual review, and model retraining. Existing event catalogs can supply initial labels, and model predictions support statistical studies."></div>
+          <figcaption class="fig-cap"><b>Figure 3.</b> From MMS data download and event detection to review and model training.</figcaption>
+        </figure>
+      </div>
+
+      <h3>Model validation</h3>
+      <div class="ai-cols">
+        <div>
+          <p>Events observed on the same day may have similar plasma conditions and wave properties. To avoid putting similar events in both training and validation, the data are split by day, not by individual event. About 20% of the labeled days are reserved for validation.</p>
+          <p>The new and current models are compared on events that neither has seen during training. If their performance is similar, the better-calibrated model is chosen. The classification threshold is set by cross-validation.</p>
+        </div>
+        <div>
+          <p>Missing data can also affect training. For example, the model may learn that missing wave data means an event is not a duct. DuctLab checks whether features are missing more often in one class than the other. Events without the necessary wave data are left unlabeled.</p>
+          <p>The settings and results of each training run are saved, along with the model, so earlier versions can be compared or reused.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="review">
+    <div class="wrap">
+      <div class="prose">
+        <h2>Reviewing events</h2>
+        <p class="lead">Reviewers check the detected events and label them Good, Bad or Unsure. They can correct the boundaries and add any ducts the detector missed. DuctLab also has a phone app, so events can be reviewed without sitting at a computer.</p>
+      </div>
+      <div class="shots">
+        <figure>
+          <div class="plate annot" id="annot">
+            <img src="assets/img/review-desktop.webp" width="1600" height="1721" loading="lazy" alt="DuctLab desktop review interface showing event measurements, classification probability, review controls, magnetic field and electron density profiles, electric and magnetic field spectrograms, and whistler-band wave power. The candidate interval is highlighted between adjustable boundaries.">
+            <span class="pin" style="left:22.6%;top:19.3%" aria-hidden="true">1</span>
+            <span class="pin" style="left:33.6%;top:16.7%" aria-hidden="true">2</span>
+            <span class="pin" style="left:57.5%;top:36.7%" aria-hidden="true">3</span>
+            <span class="pin" style="left:18.4%;top:31.4%" aria-hidden="true">4</span>
+            <span class="pin" style="left:88.6%;top:61.2%" aria-hidden="true">5</span>
+          </div>
+          <figcaption class="fig-cap"><b>Figure 4.</b> Reviewing an event in the desktop app.</figcaption>
+          <ol class="callouts" id="callouts">
+            <li data-pin="0"><span>Label an event Good (G), Bad (B) or Unsure (U), select its type and add a comment.</span></li>
+            <li data-pin="1"><span>The model’s probability and predicted duct type.</span></li>
+            <li data-pin="2"><span>Move the duct boundaries on any panel. The program recalculates the features.</span></li>
+            <li data-pin="3"><span>Previous and next detections in the same time interval.</span></li>
+            <li data-pin="4"><span>Electric and magnetic field spectra with adjustable color and frequency scales.</span></li>
+          </ol>
+        </figure>
+        <figure>
+          <div class="plate"><img src="assets/img/review-phone.webp" width="1300" height="1355" loading="lazy" alt="Two screens of the DuctLab mobile application showing event classification and adjustment of duct boundaries using touch controls."></div>
+          <figcaption class="fig-cap"><b>Figure 5.</b> The phone app. Left: reviewing an event and zooming in on the plots. Right: moving the duct boundaries. Labels saved offline are sent to the server when the phone is back online.</figcaption>
+        </figure>
+      </div>
+      <div class="prose" style="margin-top:clamp(28px,4vw,44px)">
+        <h3>Reviewing as a team</h3>
+        <p>Several people can review events at the same time. Each reviewer has a separate account and can see only their own labels. An event is reserved for 30 minutes during online review, or eight hours for offline review, to avoid assigning it to two people at the same time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="software">
+    <div class="wrap">
+      <div class="prose">
+        <h2>The software</h2>
+        <p class="lead">DuctLab is a Python application that downloads MMS data, detects and displays events, and trains the machine-learning models.</p>
+        <p>The entire project is in one folder and can be kept on an external drive. The launcher sets up the Python environment on macOS, Windows or Linux. The app runs in its own window or in a browser.</p>
+        <p>The program downloads magnetic field, plasma, wave and orbit data from the MMS Science Data Center using pySPEDAS. It can run on a local computer or a Linux server. With the server running, events can be reviewed and labeled from a computer or phone anywhere.</p>
+        <p>New versions are shared through a private GitHub repository. Installations update automatically, and everyone uses the same analysis settings. The code has 155 automated tests, including tests of the review screens.</p>
+        <p>DuctLab is built with Python, NumPy, SciPy, pandas, scikit-learn, PyTorch, pySPEDAS, Flask, Plotly.js and SQLite.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="research" aria-labelledby="research-title" style="border-top:1px solid var(--rule)">
+    <div class="wrap">
+      <div class="prose">
+        <h2 id="research-title">Research goals</h2>
+        <p class="lead">The goal is to build a catalog of magnetic and density ducts across the MMS mission to study the propagation of whistler-mode waves.</p>
+        <p>The main questions are where different types of ducts occur in the magnetosphere, what their physical properties are, and how they depend on the local plasma conditions and geomagnetic activity.</p>
+        <p>Other goals are to study the relationship between duct properties and wave localization, select events for numerical simulations, and investigate the role of ducted whistler-mode waves in wave-particle interactions.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="status" class="status">
+    <div class="wrap status-grid">
+      <div class="prose">
+        <h2>Status and contact</h2>
+        <p class="lead">DuctLab is still in development. The current version is 0.8.8 (November 2026).</p>
+        <p>The code and project data are private for now. Current work focuses on expanding the catalog and improving the detection and classification methods.</p>
+        <p>If you are working on similar problems, would like to try DuctLab on your own events, or are interested in helping with the event review, please get in touch.</p>
+      </div>
+      <div class="contact">
+        <a class="row" href="https://github.com/SANejad"><img src="assets/img/icon-128.png" alt="" width="40" height="40" style="border-radius:9px"><div><b>SAN on GitHub</b><span>github.com/SANejad</span></div></a>
+        <a class="row" href="https://orcid.org/0000-0002-5087-2793"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#A6CE39"/><text x="20" y="26" text-anchor="middle" font-family="Fira Sans,sans-serif" font-weight="600" font-size="15" fill="#fff">iD</text></svg><div><b>ORCID</b><span>0000-0002-5087-2793</span></div></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 SAN. MMS data: NASA MMS Science Data Center.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var strip = document.getElementById('strip');
+  if (strip) {
+    var go = function(){ strip.classList.add('play'); };
+    var img = new Image(); img.onload = go; img.onerror = go; img.src = 'assets/img/hero-field.webp';
+    setTimeout(go, 1500);
+  }
+  var pins = document.querySelectorAll('#annot .pin');
+  document.querySelectorAll('#callouts li').forEach(function(li){
+    var p = pins[+li.getAttribute('data-pin')];
+    li.tabIndex = 0;
+    ['mouseenter','focus'].forEach(function(ev){ li.addEventListener(ev, function(){ p && p.classList.add('on'); }); });
+    ['mouseleave','blur'].forEach(function(ev){ li.addEventListener(ev, function(){ p && p.classList.remove('on'); }); });
+  });
+})();
+</script>
+</body>
+</html>
